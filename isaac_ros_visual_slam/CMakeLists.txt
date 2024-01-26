@@ -83,6 +83,9 @@ elseif( ${ARCHITECTURE} STREQUAL "aarch64" )
   set_property(TARGET cuvslam PROPERTY IMPORTED_LOCATION ${CUVSLAM}/lib_aarch64_jetpack51/libcuvslam.so)
 endif()
 
+# Add the path to cuvslam/include to the include directories
+include_directories(${CMAKE_SOURCE_DIR}/lib/cuvslam/include)
+
 # visual_slam_node
 ament_auto_add_library(
   visual_slam_node SHARED
