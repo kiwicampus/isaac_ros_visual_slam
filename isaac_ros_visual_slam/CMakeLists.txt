@@ -33,12 +33,43 @@ find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
+
+# cuVSLAM and cuApriltags (register paths and install)
+
+# Determine the architecture
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+    set(CUVSLAM_LIB_PATH "lib/cuvslam/lib_aarch64_jetpack51")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+    set(CUVSLAM_LIB_PATH "lib/cuvslam/lib_x86_64_cuda_11_8")
+else()
+    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+
+# Install the correct libcuapriltags.a/libcuvslam.so based on the architecture
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+    install(FILES ${CUVSLAM_LIB_PATH}/libcuvslam.so
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/cuvslam/lib_aarch64_jetpack51")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+    install(FILES ${CUVSLAM_LIB_PATH}/libcuvslam.so
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/cuvslam/lib_x86_64_cuda_11_8")
+else()
+    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+
+# Install the header file for cuvslam
+install(FILES lib/cuvslam/include/cuvslam.h
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/cuvslam/include")
+
+# cuVSLAM (register path)
+ament_index_register_resource(cuvslam CONTENT share/${PROJECT_NAME}/cuvslam)
+
+
 # cuVSLAM (resolve path from ament_index)
-ament_index_get_resource(CUVSLAM_RELATIVE_PATH cuvslam)
+# ament_index_get_resource(CUVSLAM_RELATIVE_PATH cuvslam)
 ament_index_get_prefix_path(AMENT_INDEX_PREFIX_PATHS)
 foreach(PREFIX_PATH IN LISTS AMENT_INDEX_PREFIX_PATHS)
-    if(EXISTS "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")
-      set(CUVSLAM "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")
+    if(EXISTS "${PREFIX_PATH}/${CUVSLAM_LIB_PATH}")
+      set(CUVSLAM "${PREFIX_PATH}/${CUVSLAM_LIB_PATH}")
       break()
     endif()
 endforeach()
