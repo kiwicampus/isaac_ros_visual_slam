@@ -21,7 +21,7 @@
 #include <utility>
 
 #include "eigen3/Eigen/Dense"
-#include "isaac_ros_nitros/types/type_utility.hpp"
+#include "isaac_ros_visual_slam/types/type_utility.hpp"
 #include "isaac_ros_visual_slam/impl/cuvslam_ros_convertion.hpp"
 #include "isaac_ros_visual_slam/impl/has_subscribers.hpp"
 #include "isaac_ros_visual_slam/impl/stopwatch.hpp"

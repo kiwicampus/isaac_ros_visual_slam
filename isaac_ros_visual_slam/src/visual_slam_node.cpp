@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "isaac_ros_nitros/types/type_utility.hpp"
+#include "isaac_ros_visual_slam/types/type_utility.hpp"
 #include "isaac_ros_visual_slam/visual_slam_node.hpp"
 #include "isaac_ros_visual_slam/impl/types.hpp"
 #include "isaac_ros_visual_slam/impl/visual_slam_impl.hpp"
