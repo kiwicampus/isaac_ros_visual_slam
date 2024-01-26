@@ -66,14 +66,16 @@ ament_index_register_resource(cuvslam CONTENT share/${PROJECT_NAME}/cuvslam)
 
 # cuVSLAM (resolve path from ament_index)
 # ament_index_get_resource(CUVSLAM_RELATIVE_PATH cuvslam isaac_ros_visual_slam)
-set(CUVSLAM_RELATIVE_PATH "lib/cuvslam")
-ament_index_get_prefix_path(AMENT_INDEX_PREFIX_PATHS)
-foreach(PREFIX_PATH IN LISTS AMENT_INDEX_PREFIX_PATHS)
-    if(EXISTS "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")
-      set(CUVSLAM "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")
-      break()
-    endif()
-endforeach()
+# set(CUVSLAM_RELATIVE_PATH "lib/cuvslam")
+# ament_index_get_prefix_path(AMENT_INDEX_PREFIX_PATHS)
+# foreach(PREFIX_PATH IN LISTS AMENT_INDEX_PREFIX_PATHS)
+#     if(EXISTS "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")
+#       set(CUVSLAM "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")
+#       break()
+#     endif()
+# endforeach()
+
+set(CUVSLAM ${CMAKE_SOURCE_DIR}/lib/cuvslam)
 
 include_directories(${CUVSLAM}/include)
 add_library(cuvslam SHARED IMPORTED)
@@ -84,7 +86,7 @@ elseif( ${ARCHITECTURE} STREQUAL "aarch64" )
 endif()
 
 # Add the path to cuvslam/include to the include directories
-include_directories(${CMAKE_SOURCE_DIR}/lib/cuvslam/include)
+# include_directories(${CMAKE_SOURCE_DIR}/lib/cuvslam/include)
 
 # visual_slam_node
 ament_auto_add_library(
