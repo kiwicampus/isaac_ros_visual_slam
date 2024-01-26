@@ -34,7 +34,7 @@ find_package(Threads REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # cuVSLAM (resolve path from ament_index)
-ament_index_get_resource(CUVSLAM_RELATIVE_PATH cuvslam isaac_ros_nitros)
+ament_index_get_resource(CUVSLAM_RELATIVE_PATH cuvslam)
 ament_index_get_prefix_path(AMENT_INDEX_PREFIX_PATHS)
 foreach(PREFIX_PATH IN LISTS AMENT_INDEX_PREFIX_PATHS)
     if(EXISTS "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")

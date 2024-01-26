@@ -40,7 +40,6 @@
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>visualization_msgs</depend>
-  <depend>isaac_ros_nitros</depend>
   <depend>isaac_ros_visual_slam_interfaces</depend>
 
   <build_depend>isaac_ros_common</build_depend>
