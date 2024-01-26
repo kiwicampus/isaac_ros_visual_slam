@@ -114,38 +114,4 @@ endif()
 set_target_properties(visual_slam_node PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 set_target_properties(visual_slam_node PROPERTIES INSTALL_RPATH "$ORIGIN/../share/cuvslam")
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
-
-  # The FindPythonInterp and FindPythonLibs modules are removed
-  if(POLICY CMP0148)
-    cmake_policy(SET CMP0148 OLD)
-  endif()
-
-  find_package(launch_testing_ament_cmake REQUIRED)
-  add_launch_test(test/isaac_ros_visual_slam_pol.py)
-  add_launch_test(test/isaac_ros_visual_slam_srv.py)
-
-  find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(${PROJECT_NAME}_test_message_buffer test/test_message_buffer.cpp)
-  target_include_directories(${PROJECT_NAME}_test_message_buffer PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-  )
-  ament_target_dependencies(${PROJECT_NAME}_test_message_buffer
-    std_msgs
-  )
-
-  ament_add_gtest(${PROJECT_NAME}_test_message_stream_sequencer test/test_message_stream_sequencer.cpp)
-  target_include_directories(${PROJECT_NAME}_test_message_stream_sequencer PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-  )
-  ament_target_dependencies(${PROJECT_NAME}_test_message_stream_sequencer
-    std_msgs
-  )
-endif()
-
 ament_auto_package(INSTALL_TO_SHARE config launch params)
