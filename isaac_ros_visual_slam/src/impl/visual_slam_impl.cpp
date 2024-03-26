@@ -196,6 +196,7 @@ void VisualSlamNode::VisualSlamImpl::Init(
         return;
       }
       const double baseline = -right_p[3] / fx;
+      // RCLCPP_INFO(node.get_logger(), "baseline is : %f", baseline);
       if (std::abs(baseline) < 1e-6) {
         RCLCPP_ERROR(node.get_logger(), "Baseline is too small: %f", baseline);
         return;
@@ -908,21 +909,44 @@ void VisualSlamNode::VisualSlamImpl::TrackAndGetPose(
       }
       node.tracking_vo_pose_covariance_pub_->publish(std::move(pose_n_cov));
     }
-    if (HasSubscribers(node.tracking_odometry_pub_)) {
+    if (HasSubscribers(node.tracking_odometry_pub_) && node.odometry_initialized_) {
       OdometryType odom;
       odom.header = header_odom;
       odom.child_frame_id = node.base_frame_;
 
       odom.pose.pose = vo_pose;
-      bool res = pose_cache.GetCovariance(odom.pose.covariance);
-      if (!res) {
-        // set default Identity matrix
-        for (int i = 0; i < 6; i++) {
-          for (int j = 0; j < 6; j++) {
-            odom.pose.covariance[i * 6 + j] = i == j ? 1 : 0;
-          }
+      // Measure time elapsed since last update
+      auto current_timestamp = std::chrono::steady_clock::now();
+      // auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(current_timestamp - node.odometry_update_timestamp_).count();
+      auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(current_timestamp - node.odometry_update_timestamp_).count();
+      float elapsed_seconds = (float)elapsed/1000.0;
+      RCLCPP_INFO(node.get_logger(), "Elapsed time since last update: %f", elapsed_seconds);
+      // bool res = pose_cache.GetCovariance(odom.pose.covariance);
+      // if (!res) {
+      //   // set default Identity matrix
+      //   for (int i = 0; i < 6; i++) {
+      //     for (int j = 0; j < 6; j++) {
+      //       odom.pose.covariance[i * 6 + j] = i == j ? 1 : 0;
+      //     }
+      //   }
+      // }
+      std::array<double, 36> state_transition_array;
+      bool res = pose_cache.GetCovariance(state_transition_array);
+      for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 6; j++) {
+          state_transition_array[i * 6 + j] = i == j ? 0.03 : 0;
         }
       }
+      // Map the std::array data to Eigen::Matrix without copying.
+      Eigen::Map<Eigen::Matrix<double, 6, 6>> state_transition_matrix(state_transition_array.data());
+      Eigen::Map<Eigen::Matrix<double, 6, 6>> pose_covariance(node.pose_covariance_.data());
+      // Perform the visual odometry update
+      Eigen::Matrix<double, 6, 6> new_covariance = state_transition_matrix + pose_covariance;
+      std::array<double, 36> new_covariance_array;
+      Eigen::Map<Eigen::Matrix<double, 6, 6>>(new_covariance_array.data()) = new_covariance;
+      // Update the pose covariance
+      node.pose_covariance_ = new_covariance_array;
+      odom.pose.covariance = new_covariance_array;
 
       odom.twist.twist.linear = velocity.linear;
       odom.twist.twist.angular = velocity.angular;
@@ -936,6 +960,19 @@ void VisualSlamNode::VisualSlamImpl::TrackAndGetPose(
           }
         }
       }
+      // Transform odom message to map frame from visual_odom
+      tf2::Transform map_to_vo = GetFrameTransform(
+        timestamp_output, "map", "visual_odom");
+      // Transform odom message to tf2::Transform
+      tf2::Transform visual_odom_to_base_link;
+      tf2::fromMsg(odom.pose.pose, visual_odom_to_base_link);
+      // Transform odom message to map frame
+      tf2::Transform map_to_base_link = map_to_vo * visual_odom_to_base_link;
+
+      // Transform map_to_base_link transform buck to odom message
+      // odom.pose.pose = tf2::toMsg(map_to_base_link);
+      tf2::toMsg(map_to_base_link, odom.pose.pose);
+      odom.header.frame_id = "map";
       node.tracking_odometry_pub_->publish(odom);
     }
     if (HasSubscribers(node.vis_vo_velocity_pub_)) {

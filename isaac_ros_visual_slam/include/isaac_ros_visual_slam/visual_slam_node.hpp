@@ -22,11 +22,13 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <chrono>
 
 #include "isaac_ros_visual_slam/impl/types.hpp"
 #include "message_filters/subscriber.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
+#include <Eigen/Dense>
 
 namespace nvidia
 {
@@ -245,6 +247,10 @@ private:
   std::unique_ptr<VisualSlamImpl> impl_;
 
   bool valid_cuvslam_api_ = true;
+  bool odometry_initialized_ = false;
+  std::chrono::time_point<std::chrono::steady_clock> odometry_update_timestamp_;
+  // Odometry estimation covariance
+  std::array<double, 36> pose_covariance_;
 };
 
 }  // namespace visual_slam

@@ -29,6 +29,7 @@
 #include "isaac_ros_visual_slam_interfaces/srv/set_odometry_pose.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/imu.hpp"

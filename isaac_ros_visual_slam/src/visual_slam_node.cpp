@@ -212,6 +212,8 @@ VisualSlamNode::VisualSlamNode(rclcpp::NodeOptions options)
       &VisualSlamNode::CallbackSaveMapGoal, this, std::placeholders::_1, std::placeholders::_2),
     std::bind(&VisualSlamNode::CallbackSaveMapCancel, this, std::placeholders::_1),
     std::bind(&VisualSlamNode::CallbackSaveMapAccepted, this, std::placeholders::_1));
+  odometry_update_timestamp_ = std::chrono::steady_clock::now(); //TODO(juan.galvis): remove this. Only for debugging
+  // odometry_initialized_ = true;
 }
 
 VisualSlamNode::~VisualSlamNode()
@@ -332,7 +334,7 @@ void VisualSlamNode::CallbackSetOdometryPose(
 
   if (impl_->IsInitialized()) {
     tf2::Transform req_map_pose_base_link;
-    tf2::fromMsg(req->pose, req_map_pose_base_link);
+    tf2::fromMsg(req->pose.pose, req_map_pose_base_link);
 
     CUVSLAM_Pose vo_pose;
     const CUVSLAM_Status status = CUVSLAM_GetOdometryPose(impl_->cuvslam_handle, &vo_pose);
@@ -348,9 +350,16 @@ void VisualSlamNode::CallbackSetOdometryPose(
       impl_->base_link_pose_left.inverse();
 
     const tf2::Transform map_pose_odom = req_map_pose_base_link * odom_pose_base_link.inverse();
-
-    impl_->PublishFrameTransform(this->get_clock()->now(), map_pose_odom, "map", odom_frame_, true);
+    impl_->PublishFrameTransform(this->get_clock()->now(), map_pose_odom, "map", "visual_map", true);
     res->success = true;
+    odometry_initialized_ = true;
+    odometry_update_timestamp_ = std::chrono::steady_clock::now();
+    pose_covariance_ = req->pose.covariance;
+    // multiply all values in pose_covariance by 3
+    for (int i = 0; i < 36; i++) {
+      pose_covariance_[i] *= 15.0;
+    }
+
   } else {
     RCLCPP_ERROR(this->get_logger(), "CUVSLAM tracker is not initialized");
   }

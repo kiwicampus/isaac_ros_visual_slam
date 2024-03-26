@@ -22,9 +22,10 @@
 #include <memory>
 #include <string>
 #include <utility>
-
+#include <chrono>
 #include "cuvslam.h"  // NOLINT - include .h without directory
 #include "cv_bridge/cv_bridge.h"
+#include <Eigen/Dense>
 #include "isaac_ros_visual_slam/impl/landmarks_vis_helper.hpp"
 #include "isaac_ros_visual_slam/impl/localizer_vis_helper.hpp"
 #include "isaac_ros_visual_slam/impl/message_stream_sequencer.hpp"

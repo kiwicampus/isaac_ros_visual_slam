@@ -1,6 +1,6 @@
 # This service set up odometry pose.
 # Request
-geometry_msgs/Pose pose
+geometry_msgs/PoseWithCovariance pose
 ---
 # Response
 # Indicate successful run of the service
