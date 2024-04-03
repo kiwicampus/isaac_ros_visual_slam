@@ -28,6 +28,7 @@
 #include "message_filters/subscriber.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include <Eigen/Dense>
 
 namespace nvidia
@@ -251,6 +252,7 @@ private:
   std::chrono::time_point<std::chrono::steady_clock> odometry_update_timestamp_;
   // Odometry estimation covariance
   std::array<double, 36> pose_covariance_;
+  tf2::Transform prev_transform_;
 };
 
 }  // namespace visual_slam

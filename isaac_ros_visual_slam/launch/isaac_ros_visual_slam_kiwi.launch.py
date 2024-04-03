@@ -32,7 +32,7 @@ def generate_launch_description():
         #             ('/stereo_camera/right/camera_info', '/camera_info_right')],
         parameters=[{
                     'use_sim_time': True,
-                    'denoise_input_images': True,
+                    'denoise_input_images': False,
                     'rectified_images': True,
                     'enable_slam_visualization': True,
                     'enable_observations_view': True,
@@ -56,9 +56,9 @@ def generate_launch_description():
                     'input_left_camera_frame': 'camera_infra1_frame',
                     # 'input_right_camera_frame': 'camera_infra2_frame',
                     'path_max_size': 4096*2,
-                    'img_jitter_threshold_ms': 200.0,
+                    'img_jitter_threshold_ms': 100.0,
                     'force_planar_mode': False,
-                    'enable_localization_n_mapping': True,
+                    'enable_localization_n_mapping': False,
                     'publish_odom_to_base_tf': False
                     }],
         remappings=[('stereo_camera/left/image', 'camera/infra1/image_rect_raw'),

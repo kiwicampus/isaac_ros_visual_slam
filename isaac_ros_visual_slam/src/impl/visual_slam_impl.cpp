@@ -920,7 +920,7 @@ void VisualSlamNode::VisualSlamImpl::TrackAndGetPose(
       // auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(current_timestamp - node.odometry_update_timestamp_).count();
       auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(current_timestamp - node.odometry_update_timestamp_).count();
       float elapsed_seconds = (float)elapsed/1000.0;
-      RCLCPP_INFO(node.get_logger(), "Elapsed time since last update: %f", elapsed_seconds);
+      // RCLCPP_INFO(node.get_logger(), "Elapsed time since last update: %f", elapsed_seconds);
       // bool res = pose_cache.GetCovariance(odom.pose.covariance);
       // if (!res) {
       //   // set default Identity matrix
@@ -934,7 +934,7 @@ void VisualSlamNode::VisualSlamImpl::TrackAndGetPose(
       bool res = pose_cache.GetCovariance(state_transition_array);
       for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 6; j++) {
-          state_transition_array[i * 6 + j] = i == j ? 0.03 : 0;
+          state_transition_array[i * 6 + j] = i == j ? 0.035 : 0;
         }
       }
       // Map the std::array data to Eigen::Matrix without copying.

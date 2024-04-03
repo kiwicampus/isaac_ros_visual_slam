@@ -30,7 +30,6 @@
 #include "isaac_ros_visual_slam/impl/has_subscribers.hpp"
 #include "isaac_ros_visual_slam/impl/stopwatch.hpp"
 #include "isaac_ros_visual_slam/impl/qos.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 namespace nvidia
 {
@@ -349,16 +348,47 @@ void VisualSlamNode::CallbackSetOdometryPose(
     const tf2::Transform odom_pose_base_link = impl_->initial_odom_pose_left * ros_vo_pose *
       impl_->base_link_pose_left.inverse();
 
-    const tf2::Transform map_pose_odom = req_map_pose_base_link * odom_pose_base_link.inverse();
+    // New Transform
+    tf2::Transform map_pose_odom = req_map_pose_base_link * odom_pose_base_link.inverse();
+    float alpha = 0.2;
+    // Get current Transform from map to visual_map
+    if (odometry_initialized_){
+      // Average translation
+      tf2::Vector3 translation_avg = (prev_transform_.getOrigin()*(1.0-alpha) + map_pose_odom.getOrigin()*alpha);
+
+      // Get quaternions from the transforms
+      tf2::Quaternion q1, q2;
+      q1 = prev_transform_.getRotation();
+      q2 = map_pose_odom.getRotation();
+
+      // Average quaternions
+      tf2::Quaternion q_avg = q1.slerp(q2, alpha);
+      q_avg.normalize(); // Not sure if this is needed
+
+      map_pose_odom.setOrigin(translation_avg);
+      map_pose_odom.setRotation(q_avg);
+      prev_transform_ = map_pose_odom;
+    }
+    else{
+      prev_transform_ = map_pose_odom;
+    }
     impl_->PublishFrameTransform(this->get_clock()->now(), map_pose_odom, "map", "visual_map", true);
+    
+    std::array<double, 36> new_covariance = req->pose.covariance;
+    // multiply all values in pose_covariance by 3
+    if (odometry_initialized_){
+      for (int i = 0; i < 36; i++) {
+        pose_covariance_[i] = pose_covariance_[i]*(1.0-alpha) + 10.0*new_covariance[i]*alpha;
+      }
+    }
+    else{
+      for (int i = 0; i < 36; i++) {
+        pose_covariance_[i] = new_covariance[i]*10.0;
+      }
+    }
     res->success = true;
     odometry_initialized_ = true;
     odometry_update_timestamp_ = std::chrono::steady_clock::now();
-    pose_covariance_ = req->pose.covariance;
-    // multiply all values in pose_covariance by 3
-    for (int i = 0; i < 36; i++) {
-      pose_covariance_[i] *= 15.0;
-    }
 
   } else {
     RCLCPP_ERROR(this->get_logger(), "CUVSLAM tracker is not initialized");
