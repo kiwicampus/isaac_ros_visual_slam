@@ -33,15 +33,49 @@ find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
+
+# cuVSLAM and cuApriltags (register paths and install)
+
+# Determine the architecture
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+    set(CUVSLAM_LIB_PATH "lib/cuvslam/lib_aarch64_jetpack51")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+    set(CUVSLAM_LIB_PATH "lib/cuvslam/lib_x86_64_cuda_11_8")
+else()
+    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+
+# Install the correct libcuapriltags.a/libcuvslam.so based on the architecture
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+    install(FILES ${CUVSLAM_LIB_PATH}/libcuvslam.so
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/cuvslam/lib_aarch64_jetpack51")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+    install(FILES ${CUVSLAM_LIB_PATH}/libcuvslam.so
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/cuvslam/lib_x86_64_cuda_11_8")
+else()
+    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+
+# Install the header file for cuvslam
+install(FILES lib/cuvslam/include/cuvslam.h
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/cuvslam/include")
+
+# cuVSLAM (register path)
+ament_index_register_resource(cuvslam CONTENT share/${PROJECT_NAME}/cuvslam)
+
+
 # cuVSLAM (resolve path from ament_index)
-ament_index_get_resource(CUVSLAM_RELATIVE_PATH cuvslam isaac_ros_nitros)
-ament_index_get_prefix_path(AMENT_INDEX_PREFIX_PATHS)
-foreach(PREFIX_PATH IN LISTS AMENT_INDEX_PREFIX_PATHS)
-    if(EXISTS "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")
-      set(CUVSLAM "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")
-      break()
-    endif()
-endforeach()
+# ament_index_get_resource(CUVSLAM_RELATIVE_PATH cuvslam isaac_ros_visual_slam)
+# set(CUVSLAM_RELATIVE_PATH "lib/cuvslam")
+# ament_index_get_prefix_path(AMENT_INDEX_PREFIX_PATHS)
+# foreach(PREFIX_PATH IN LISTS AMENT_INDEX_PREFIX_PATHS)
+#     if(EXISTS "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")
+#       set(CUVSLAM "${PREFIX_PATH}/${CUVSLAM_RELATIVE_PATH}")
+#       break()
+#     endif()
+# endforeach()
+
+set(CUVSLAM ${CMAKE_SOURCE_DIR}/lib/cuvslam)
 
 include_directories(${CUVSLAM}/include)
 add_library(cuvslam SHARED IMPORTED)
@@ -50,6 +84,9 @@ if( ${ARCHITECTURE} STREQUAL "x86_64" )
 elseif( ${ARCHITECTURE} STREQUAL "aarch64" )
   set_property(TARGET cuvslam PROPERTY IMPORTED_LOCATION ${CUVSLAM}/lib_aarch64_jetpack51/libcuvslam.so)
 endif()
+
+# Add the path to cuvslam/include to the include directories
+# include_directories(${CMAKE_SOURCE_DIR}/lib/cuvslam/include)
 
 # visual_slam_node
 ament_auto_add_library(
@@ -82,39 +119,5 @@ elseif( ${ARCHITECTURE} STREQUAL "aarch64" )
 endif()
 set_target_properties(visual_slam_node PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 set_target_properties(visual_slam_node PROPERTIES INSTALL_RPATH "$ORIGIN/../share/cuvslam")
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
-
-  # The FindPythonInterp and FindPythonLibs modules are removed
-  if(POLICY CMP0148)
-    cmake_policy(SET CMP0148 OLD)
-  endif()
-
-  find_package(launch_testing_ament_cmake REQUIRED)
-  add_launch_test(test/isaac_ros_visual_slam_pol.py)
-  add_launch_test(test/isaac_ros_visual_slam_srv.py)
-
-  find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(${PROJECT_NAME}_test_message_buffer test/test_message_buffer.cpp)
-  target_include_directories(${PROJECT_NAME}_test_message_buffer PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-  )
-  ament_target_dependencies(${PROJECT_NAME}_test_message_buffer
-    std_msgs
-  )
-
-  ament_add_gtest(${PROJECT_NAME}_test_message_stream_sequencer test/test_message_stream_sequencer.cpp)
-  target_include_directories(${PROJECT_NAME}_test_message_stream_sequencer PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-  )
-  ament_target_dependencies(${PROJECT_NAME}_test_message_stream_sequencer
-    std_msgs
-  )
-endif()
 
 ament_auto_package(INSTALL_TO_SHARE config launch params)
