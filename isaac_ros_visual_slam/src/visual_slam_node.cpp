@@ -82,7 +82,7 @@ VisualSlamNode::VisualSlamNode(rclcpp::NodeOptions options)
   image_qos_(parseQosString(declare_parameter<std::string>("image_qos", "SENSOR_DATA"))),
   covariance_factor_(declare_parameter<double>("covariance_factor", 10.0)),
   rolling_average_alpha_(declare_parameter<double>("rolling_average_alpha", 0.2)),
-  variance_increase_factor_(declare_parameter<double>("variance_increase_factor", 0.3)),
+  variance_increase_factor_(declare_parameter<double>("variance_increase_factor", 0.03)),
   standalone_(declare_parameter<bool>("standalone", false)),
   // Subscribers
   left_image_sub_(message_filters::Subscriber<ImageType>(
