@@ -934,7 +934,7 @@ void VisualSlamNode::VisualSlamImpl::TrackAndGetPose(
       bool res = pose_cache.GetCovariance(state_transition_array);
       for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 6; j++) {
-          state_transition_array[i * 6 + j] = i == j ? 0.035 : 0;
+          state_transition_array[i * 6 + j] = i == j ? node.variance_increase_factor_ : 0;
         }
       }
       // Map the std::array data to Eigen::Matrix without copying.

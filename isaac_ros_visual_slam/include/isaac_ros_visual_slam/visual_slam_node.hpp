@@ -253,6 +253,10 @@ private:
   // Odometry estimation covariance
   std::array<double, 36> pose_covariance_;
   tf2::Transform prev_transform_;
+  double covariance_factor_;
+  double rolling_average_alpha_;
+  double variance_increase_factor_;
+  bool standalone_;
 };
 
 }  // namespace visual_slam

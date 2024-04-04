@@ -80,6 +80,10 @@ VisualSlamNode::VisualSlamNode(rclcpp::NodeOptions options)
 
   msg_filter_queue_size_(declare_parameter<int>("msg_filter_queue_size", 100)),
   image_qos_(parseQosString(declare_parameter<std::string>("image_qos", "SENSOR_DATA"))),
+  covariance_factor_(declare_parameter<double>("covariance_factor", 10.0)),
+  rolling_average_alpha_(declare_parameter<double>("rolling_average_alpha", 0.2)),
+  variance_increase_factor_(declare_parameter<double>("variance_increase_factor", 0.3)),
+  standalone_(declare_parameter<bool>("standalone", false)),
   // Subscribers
   left_image_sub_(message_filters::Subscriber<ImageType>(
       this, "stereo_camera/left/image", image_qos_)),
@@ -212,7 +216,15 @@ VisualSlamNode::VisualSlamNode(rclcpp::NodeOptions options)
     std::bind(&VisualSlamNode::CallbackSaveMapCancel, this, std::placeholders::_1),
     std::bind(&VisualSlamNode::CallbackSaveMapAccepted, this, std::placeholders::_1));
   odometry_update_timestamp_ = std::chrono::steady_clock::now(); //TODO(juan.galvis): remove this. Only for debugging
-  // odometry_initialized_ = true;
+  if(standalone_){
+    odometry_initialized_ = true;
+    // initialize pose_covariance_ with 0.1 in the diagonal and 0 in the rest
+    for (int i = 0; i < 36; i++) {
+      for (int j = 0; j < 36; j++) {
+        pose_covariance_[i] = i == j ? 0.1 : 0;
+      }
+    }
+  }
 }
 
 VisualSlamNode::~VisualSlamNode()
@@ -350,11 +362,10 @@ void VisualSlamNode::CallbackSetOdometryPose(
 
     // New Transform
     tf2::Transform map_pose_odom = req_map_pose_base_link * odom_pose_base_link.inverse();
-    float alpha = 0.2;
     // Get current Transform from map to visual_map
     if (odometry_initialized_){
       // Average translation
-      tf2::Vector3 translation_avg = (prev_transform_.getOrigin()*(1.0-alpha) + map_pose_odom.getOrigin()*alpha);
+      tf2::Vector3 translation_avg = (prev_transform_.getOrigin()*(1.0-rolling_average_alpha_) + map_pose_odom.getOrigin()*rolling_average_alpha_);
 
       // Get quaternions from the transforms
       tf2::Quaternion q1, q2;
@@ -362,7 +373,7 @@ void VisualSlamNode::CallbackSetOdometryPose(
       q2 = map_pose_odom.getRotation();
 
       // Average quaternions
-      tf2::Quaternion q_avg = q1.slerp(q2, alpha);
+      tf2::Quaternion q_avg = q1.slerp(q2, rolling_average_alpha_);
       q_avg.normalize(); // Not sure if this is needed
 
       map_pose_odom.setOrigin(translation_avg);
@@ -378,12 +389,12 @@ void VisualSlamNode::CallbackSetOdometryPose(
     // multiply all values in pose_covariance by 3
     if (odometry_initialized_){
       for (int i = 0; i < 36; i++) {
-        pose_covariance_[i] = pose_covariance_[i]*(1.0-alpha) + 10.0*new_covariance[i]*alpha;
+        pose_covariance_[i] = pose_covariance_[i]*(1.0-rolling_average_alpha_) + variance_increase_factor_*new_covariance[i]*rolling_average_alpha_;
       }
     }
     else{
       for (int i = 0; i < 36; i++) {
-        pose_covariance_[i] = new_covariance[i]*10.0;
+        pose_covariance_[i] = new_covariance[i]*variance_increase_factor_;
       }
     }
     res->success = true;
