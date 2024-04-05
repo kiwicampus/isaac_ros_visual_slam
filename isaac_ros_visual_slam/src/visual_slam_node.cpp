@@ -161,6 +161,11 @@ VisualSlamNode::VisualSlamNode(rclcpp::NodeOptions options)
   // Initialize the impl
   impl_(std::make_unique<VisualSlamImpl>(*this))
 {
+  RCLCPP_INFO(this->get_logger(), "covariance_factor: %f", covariance_factor_);
+  RCLCPP_INFO(this->get_logger(), "rolling_average_alpha: %f", rolling_average_alpha_);
+  RCLCPP_INFO(this->get_logger(), "variance_increase_factor: %f", variance_increase_factor_);
+
+  
   // Dump and check cuVSLAM API version
   int32_t cuvslam_major, cuvslam_minor;
   const char * cuvslam_version;
