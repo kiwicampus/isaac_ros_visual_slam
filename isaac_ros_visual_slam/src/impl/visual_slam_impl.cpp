@@ -952,21 +952,6 @@ void VisualSlamNode::VisualSlamImpl::TrackAndGetPose(
       odom.twist.twist.linear = velocity.linear;
       odom.twist.twist.angular = velocity.angular;
 
-      // Print old and new covariance matrices
-      RCLCPP_INFO(node.get_logger(), "Old covariance matrix:");
-      for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 6; j++) {
-          RCLCPP_INFO(node.get_logger(), "%f ", pose_covariance(i, j));
-        }
-        RCLCPP_INFO(node.get_logger(), "\n");
-      }
-      RCLCPP_INFO(node.get_logger(), "New covariance matrix:");
-      for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 6; j++) {
-          RCLCPP_INFO(node.get_logger(), "%f ", new_covariance(i, j));
-        }
-        RCLCPP_INFO(node.get_logger(), "\n");
-      }
 
       res = velocity_cache.GetCovariance(odom.twist.covariance);
       if (!res) {
