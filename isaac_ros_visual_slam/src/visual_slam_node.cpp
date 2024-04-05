@@ -389,12 +389,12 @@ void VisualSlamNode::CallbackSetOdometryPose(
     // multiply all values in pose_covariance by 3
     if (odometry_initialized_){
       for (int i = 0; i < 36; i++) {
-        pose_covariance_[i] = pose_covariance_[i]*(1.0-rolling_average_alpha_) + variance_increase_factor_*new_covariance[i]*rolling_average_alpha_;
+        pose_covariance_[i] = pose_covariance_[i]*(1.0-rolling_average_alpha_) + covariance_factor_*new_covariance[i]*rolling_average_alpha_;
       }
     }
     else{
       for (int i = 0; i < 36; i++) {
-        pose_covariance_[i] = new_covariance[i]*variance_increase_factor_;
+        pose_covariance_[i] = new_covariance[i]*covariance_factor_;
       }
     }
     res->success = true;
